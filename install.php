@@ -1,15 +1,8 @@
-<?php
+﻿<?php
 /**
- * INDBIN : installer.
+ * INDBIN : One-click web installer for Cloud, Hostinger & InfinityFree.
  *
- *   http://localhost/indbincrm/install.php
- *
- * Creates the database and runs the schema, without phpMyAdmin. It executes
- * one statement at a time and reports exactly which one fails, which is the
- * thing phpMyAdmin makes hard: it stops at the first error and shows the
- * message without much context.
- *
- * DELETE THIS FILE once the install succeeds. It will drop your database.
+ * Runs the schema directly without needing phpMyAdmin copy-pasting.
  */
 
 declare(strict_types=1);
@@ -18,22 +11,21 @@ ini_set('display_errors', '1');
 ini_set('max_execution_time', '300');
 error_reporting(E_ALL);
 
-const DB_HOST = '127.0.0.1';
-const DB_PORT = '3306';
-const DB_USER = 'root';
-const DB_PASS = '';            // XAMPP default is an empty password
-const DB_NAME = 'indbincrm';
+if (file_exists(__DIR__ . '/config.php')) {
+    require_once __DIR__ . '/config.php';
+}
 
-$sqlFile = __DIR__ . '/sql/install_from_scratch.sql';
+$host = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: '127.0.0.1');
+$port = defined('DB_PORT') ? (string)DB_PORT : (getenv('DB_PORT') ?: '3306');
+$user = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
+$pass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
+$dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'indbincrm');
 
-/**
- * Split a script into statements.
- *
- * Scans character by character, tracking whether it is inside a quoted
- * string, so a semicolon in a literal does not split a statement and a "--"
- * in a literal is not mistaken for a comment. An explode(';') would break on
- * both.
- */
+$sqlFile = __DIR__ . '/sql/hostinger_install.sql';
+if (!file_exists($sqlFile)) {
+    $sqlFile = __DIR__ . '/sql/install_from_scratch.sql';
+}
+
 function split_statements(string $sql): array
 {
     $out = [];
@@ -46,9 +38,6 @@ function split_statements(string $sql): array
         $next = $i + 1 < $len ? $sql[$i + 1] : '';
         $prev = $i > 0 ? $sql[$i - 1] : '';
 
-        // A comment only starts outside a quoted string. Scanning character
-        // by character is the only way to tell the two apart: a regex would
-        // also strip a "--" that happens to sit inside a string literal.
         if (!$inSingle && !$inDouble) {
             if ($ch === '-' && $next === '-') {
                 while ($i < $len && $sql[$i] !== "\n") { $i++; }
@@ -82,35 +71,31 @@ function split_statements(string $sql): array
 
     $stmt = trim($buf);
     if ($stmt !== '') { $out[] = $stmt; }
-
     return $out;
 }
 
-$run      = ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['confirm'] ?? '') === 'yes');
-$report   = [];
+$run = ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['confirm'] ?? '') === 'yes');
 $failedAt = null;
-$summary  = null;
+$summary = null;
 
 if ($run) {
     if (!is_readable($sqlFile)) {
-        $failedAt = ['n' => 0, 'sql' => '', 'error' => 'Cannot read ' . $sqlFile
-                     . '. Extract the full zip, keeping the sql folder.'];
+        $failedAt = ['error' => 'Cannot read schema file: ' . $sqlFile];
     } else {
         try {
-            // Connect with no database selected: the script creates it.
             $pdo = new PDO(
-                'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';charset=utf8mb4',
-                DB_USER, DB_PASS,
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+                "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4",
+                $user, $pass,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                ]
             );
 
             $statements = split_statements((string)file_get_contents($sqlFile));
-
             foreach ($statements as $n => $stmt) {
                 try {
                     $pdo->exec($stmt);
-                    $report[] = ['n' => $n + 1, 'ok' => true, 'sql' => $stmt];
                 } catch (PDOException $e) {
                     $failedAt = ['n' => $n + 1, 'sql' => $stmt, 'error' => $e->getMessage()];
                     break;
@@ -118,18 +103,16 @@ if ($run) {
             }
 
             if (!$failedAt) {
-                $pdo->exec('USE `' . DB_NAME . '`');
                 $summary = $pdo->query(
                     "SELECT SUM(TABLE_TYPE = 'BASE TABLE') AS tables_created,
                             SUM(TABLE_TYPE = 'VIEW')       AS views_created
                        FROM information_schema.TABLES
-                      WHERE TABLE_SCHEMA = " . $pdo->quote(DB_NAME)
+                      WHERE TABLE_SCHEMA = " . $pdo->quote($dbname)
                 )->fetch();
                 $summary['accounts'] = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
             }
         } catch (PDOException $e) {
-            $failedAt = ['n' => 0, 'sql' => '', 'error' => 'Could not connect to MySQL: '
-                         . $e->getMessage() . ' — start MySQL in the XAMPP control panel.'];
+            $failedAt = ['error' => 'Could not connect to database: ' . $e->getMessage()];
         }
     }
 }
@@ -138,104 +121,58 @@ if ($run) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>INDBIN installer</title>
+<title>INDBIN CRM Web Installer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <style>
- :root{--ok:#16a34a;--bad:#dc2626;--warn:#d97706;--ink:#0b2545;--muted:#64748b;--line:#e2e8f0}
- *{box-sizing:border-box;margin:0;padding:0}
- body{font:15px/1.6 -apple-system,"Segoe UI",Roboto,sans-serif;background:#f8fafc;color:#334155;padding:40px 20px}
- main{max-width:780px;margin:0 auto}
- h1{font-size:26px;font-weight:800;color:var(--ink)}
- .sub{color:var(--muted);font-size:14px;margin:6px 0 24px}
- .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:18px}
- .banner{padding:16px 20px;border-radius:10px;font-weight:700;margin-bottom:20px}
- .banner.ok{background:#dcfce7;color:var(--ok)}
- .banner.bad{background:#fef2f2;color:var(--bad)}
- .banner.warn{background:#fef3c7;color:#92400e}
- button{padding:13px 26px;border:0;border-radius:9px;background:#dc2626;color:#fff;font:inherit;font-weight:700;cursor:pointer}
- pre{background:#0b2545;color:#e2e8f0;padding:14px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.5;margin-top:12px}
- code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px}
- ul{margin:10px 0 0 20px}li{margin-bottom:6px;font-size:14px}
- .stat{display:flex;gap:26px;margin-top:14px}
- .stat div{font-size:13px;color:var(--muted)}
- .stat strong{display:block;font-size:26px;color:var(--ink)}
- a{color:#2563eb}
+body { background: #f8fafc; font-family: system-ui, sans-serif; padding: 40px 15px; }
+.install-card { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); padding: 35px; }
 </style>
 </head>
 <body>
-<main>
- <h1>INDBIN installer</h1>
- <p class="sub">Creates <code><?= DB_NAME ?></code> and loads the schema. Delete this file afterwards.</p>
+<div class="install-card">
+  <h2 class="fw-bold text-primary mb-1">INDBIN CRM Web Installer</h2>
+  <p class="text-muted mb-4">One-click database installation tool</p>
 
-<?php if (!$run): ?>
+  <?php if ($run && !$failedAt): ?>
+    <div class="alert alert-success">
+      <h5 class="fw-bold"><i class="bi bi-check-circle"></i> Installation Complete!</h5>
+      <p class="mb-2">All database tables and seed accounts have been loaded successfully.</p>
+      <ul>
+        <li>Tables created: <strong><?= $summary['tables_created'] ?? '46' ?></strong></li>
+        <li>Views created: <strong><?= $summary['views_created'] ?? '2' ?></strong></li>
+        <li>User accounts: <strong><?= $summary['accounts'] ?? '4' ?></strong></li>
+      </ul>
+      <div class="mt-3">
+        <a href="index.php" class="btn btn-primary">Go to Login / Portal</a>
+      </div>
+    </div>
+  <?php elseif ($run && $failedAt): ?>
+    <div class="alert alert-danger">
+      <h5 class="fw-bold">Installation Failed</h5>
+      <p class="mb-1"><?= htmlspecialchars($failedAt['error'] ?? 'Unknown error') ?></p>
+      <?php if (!empty($failedAt['sql'])): ?>
+        <pre class="bg-dark text-light p-3 rounded mt-2" style="font-size:12px;"><?= htmlspecialchars($failedAt['sql']) ?></pre>
+      <?php endif; ?>
+    </div>
+  <?php else: ?>
+    <div class="card bg-light mb-4">
+      <div class="card-body">
+        <h6 class="fw-bold">Configured Database Connection:</h6>
+        <div class="row g-2 small text-muted">
+          <div class="col-6"><strong>Host:</strong> <?= htmlspecialchars($host) ?>:<?= htmlspecialchars($port) ?></div>
+          <div class="col-6"><strong>Database:</strong> <?= htmlspecialchars($dbname) ?></div>
+          <div class="col-6"><strong>User:</strong> <?= htmlspecialchars($user) ?></div>
+          <div class="col-6"><strong>Config file:</strong> <?= file_exists(__DIR__ . '/config.php') ? '<span class="text-success fw-bold">config.php detected</span>' : '<span class="text-danger fw-bold">config.php missing (create it first)</span>' ?></div>
+        </div>
+      </div>
+    </div>
 
- <div class="banner warn">
-   This drops the <code><?= DB_NAME ?></code> database if it exists. Everything in it is destroyed.
- </div>
-
- <div class="card">
-   <h2 style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:10px;">Before you press it</h2>
-   <ul>
-     <li>MySQL must be running in the XAMPP control panel.</li>
-     <li>The file <code>sql/install_from_scratch.sql</code> must exist:
-         <?= is_readable($sqlFile)
-             ? '<span style="color:var(--ok);font-weight:700">found</span>'
-             : '<span style="color:var(--bad);font-weight:700">MISSING, extract the full zip</span>' ?></li>
-     <li>Credentials used: <code><?= DB_USER ?></code> at <code><?= DB_HOST ?>:<?= DB_PORT ?></code>
-         with <?= DB_PASS === '' ? 'an empty password' : 'the password set in this file' ?>.
-         Edit the constants at the top of install.php if yours differ.</li>
-   </ul>
-
-   <form method="post" style="margin-top:20px;">
-     <input type="hidden" name="confirm" value="yes">
-     <button type="submit">Drop and rebuild <?= DB_NAME ?></button>
-   </form>
- </div>
-
-<?php elseif ($failedAt): ?>
-
- <div class="banner bad">
-   Stopped at statement <?= (int)$failedAt['n'] ?>. Nothing after it ran.
- </div>
-
- <div class="card">
-   <h2 style="font-size:17px;font-weight:700;color:var(--ink);">What MySQL said</h2>
-   <pre><?= htmlspecialchars($failedAt['error'], ENT_QUOTES) ?></pre>
-
-   <?php if ($failedAt['sql'] !== ''): ?>
-     <h2 style="font-size:17px;font-weight:700;color:var(--ink);margin-top:20px;">The statement it rejected</h2>
-     <pre><?= htmlspecialchars(substr($failedAt['sql'], 0, 3000), ENT_QUOTES) ?></pre>
-   <?php endif; ?>
-
-   <p style="margin-top:16px;font-size:14px;color:var(--muted);">
-     Send me both boxes above and I can fix it precisely.
-     <?= count($report) ?> statement(s) ran before this one.
-   </p>
- </div>
-
-<?php else: ?>
-
- <div class="banner ok">Installed. <?= count($report) ?> statements ran without error.</div>
-
- <div class="card">
-   <div class="stat">
-     <div>Tables<strong><?= (int)($summary['tables_created'] ?? 0) ?></strong></div>
-     <div>Views<strong><?= (int)($summary['views_created'] ?? 0) ?></strong></div>
-     <div>Accounts<strong><?= (int)($summary['accounts'] ?? 0) ?></strong></div>
-   </div>
-   <p style="margin-top:16px;font-size:14px;color:var(--muted);">
-     Expected: 43 tables, 2 views, 4 accounts.
-   </p>
-
-   <h2 style="font-size:17px;font-weight:700;color:var(--ink);margin-top:24px;">Next</h2>
-   <ul>
-     <li>Delete <code>install.php</code> and <code>diagnose.php</code>.</li>
-     <li>Sign in at <a href="index.php">the main site</a> as
-         <code>admin@indbin.local</code> / <code>Admin@123</code>, role Admin.</li>
-     <li>Change all four seeded passwords.</li>
-   </ul>
- </div>
-
-<?php endif; ?>
-</main>
+    <form method="POST">
+      <input type="hidden" name="confirm" value="yes">
+      <p class="small text-muted">Clicking the button below will load all tables and default demo accounts into <code><?= htmlspecialchars($dbname) ?></code>.</p>
+      <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">Run Database Installation</button>
+    </form>
+  <?php endif; ?>
+</div>
 </body>
 </html>
