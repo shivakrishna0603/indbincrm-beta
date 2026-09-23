@@ -1,41 +1,4 @@
-﻿-- =====================================================================
--- INDBIN CRM : HOSTINGER & CLOUD DATABASE INSTALLER
--- 
--- Compatible with Hostinger hPanel, cPanel, and shared hosting.
--- Does NOT drop or recreate the database so it will not trigger #1044 access denied.
---
--- Instructions for Hostinger:
--- 1. Create a MySQL Database in Hostinger hPanel > Databases
--- 2. Open phpMyAdmin for that database
--- 3. Click "Import" tab
--- 4. Choose this file (sql/hostinger_install.sql) and click "Go"
--- =====================================================================
--- =====================================================================
--- INDBIN CRM : INSTALL FROM SCRATCH
---
--- This file creates the database itself, so there is nothing to select
--- first and no way to run it against the wrong one.
---
--- HOW TO RUN IT
---   1. phpMyAdmin -> Import tab  (NOT the SQL tab)
---   2. Choose File -> C:\xampp\htdocs\indbincrm\sql\install_from_scratch.sql
---   3. Go
---
--- Use Import rather than copy-paste. Pasting is where a PHP file ends up in
--- the query box by mistake, and a 1000-line paste can also exceed the boxs
--- limit and be silently truncated halfway.
---
--- WARNING: the first statement DROPS the whole indbincrm database. Every
--- table and every row in it is destroyed. That is the point of "from
--- scratch", but export anything you want to keep first.
---
--- When it finishes, the last statement returns a count.
--- Expect: tables_created 43, views_created 2.
--- =====================================================================
-
--- [Hostinger Compatible] Using existing database selected in phpMyAdmin
-
-SET NAMES utf8mb4;
+﻿SET NAMES utf8mb4;
 SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION';
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -1118,6 +1081,7 @@ SELECT
     SUM(TABLE_TYPE = 'VIEW')       AS views_created
   FROM information_schema.TABLES
  WHERE TABLE_SCHEMA = DATABASE();
+
 
 
 
