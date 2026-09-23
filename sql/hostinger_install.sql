@@ -45,6 +45,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- One row per human, whatever their role. Merchant, agent and customer
 -- modules all query this table already, so it is the natural join point.
+DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     role              ENUM('customer','agent','merchant','admin') NOT NULL DEFAULT 'customer',
@@ -120,6 +121,7 @@ CREATE TABLE users (
 -- issued, but a monotonically increasing counter eventually reaches every
 -- number - starting agents at 1 would collide the moment the third real
 -- agent activates, since the demo agent already sits on A0000003.
+DROP TABLE IF EXISTS party_code_sequences;
 CREATE TABLE party_code_sequences (
     role_letter  CHAR(1)      NOT NULL PRIMARY KEY,
     next_number  INT UNSIGNED NOT NULL DEFAULT 1
@@ -130,6 +132,7 @@ INSERT INTO party_code_sequences (role_letter, next_number) VALUES
 
 -- The merchant and agent modules both query an `admins` table. Rather than
 -- a second password store, it is a thin extension of users.
+DROP TABLE IF EXISTS admins;
 CREATE TABLE admins (
     user_id     INT UNSIGNED PRIMARY KEY,
     designation VARCHAR(80)  NOT NULL DEFAULT 'Reviewer',
@@ -140,6 +143,7 @@ CREATE TABLE admins (
     CONSTRAINT fk_admin_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS otp_verifications;
 CREATE TABLE otp_verifications (
     id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id      INT UNSIGNED NULL,
@@ -159,6 +163,7 @@ CREATE TABLE otp_verifications (
 -- 2. KYC AND DOCUMENTS  (shared by all three roles)
 -- =====================================================================
 
+DROP TABLE IF EXISTS kyc_details;
 CREATE TABLE kyc_details (
     id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id          INT UNSIGNED NOT NULL,
@@ -186,6 +191,7 @@ CREATE TABLE kyc_details (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- The merchant and agent modules write here. Columns match their queries.
+DROP TABLE IF EXISTS kyc_documents;
 CREATE TABLE kyc_documents (
     id                     BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id                INT UNSIGNED NOT NULL,
@@ -205,6 +211,7 @@ CREATE TABLE kyc_documents (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Versioned vault used by the customer module.
+DROP TABLE IF EXISTS customer_documents;
 CREATE TABLE customer_documents (
     id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id          INT UNSIGNED NOT NULL,
@@ -230,6 +237,7 @@ CREATE TABLE customer_documents (
     CONSTRAINT fk_doc_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS consents;
 CREATE TABLE consents (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        INT UNSIGNED NOT NULL,
@@ -252,6 +260,7 @@ CREATE TABLE consents (
 -- 3. CUSTOMER MODULE
 -- =====================================================================
 
+DROP TABLE IF EXISTS customer_profiles;
 CREATE TABLE customer_profiles (
     user_id            INT UNSIGNED PRIMARY KEY,
     dob                DATE         NULL,
@@ -270,6 +279,7 @@ CREATE TABLE customer_profiles (
     CONSTRAINT fk_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS payment_instruments;
 CREATE TABLE payment_instruments (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        INT UNSIGNED NOT NULL,
@@ -293,6 +303,7 @@ CREATE TABLE payment_instruments (
     CONSTRAINT fk_instr_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS bank_mandates;
 CREATE TABLE bank_mandates (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        INT UNSIGNED NOT NULL,
@@ -313,6 +324,7 @@ CREATE TABLE bank_mandates (
     CONSTRAINT fk_mandate_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS loyalty_enrollments;
 CREATE TABLE loyalty_enrollments (
     user_id      INT UNSIGNED PRIMARY KEY,
     program_tier VARCHAR(60) NOT NULL DEFAULT 'Tier-1 Rewards',
@@ -321,6 +333,7 @@ CREATE TABLE loyalty_enrollments (
     CONSTRAINT fk_loy_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS loyalty_ledger;
 CREATE TABLE loyalty_ledger (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id       INT UNSIGNED NOT NULL,
@@ -334,6 +347,7 @@ CREATE TABLE loyalty_ledger (
     CONSTRAINT fk_ledger_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS referrals;
 CREATE TABLE referrals (
     id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id         INT UNSIGNED NOT NULL,
@@ -353,6 +367,7 @@ CREATE TABLE referrals (
 -- =====================================================================
 
 -- Versioned, used by the customer modules scoring engine.
+DROP TABLE IF EXISTS credit_evaluations;
 CREATE TABLE credit_evaluations (
     id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id          INT UNSIGNED NOT NULL,
@@ -379,6 +394,7 @@ CREATE TABLE credit_evaluations (
 
 -- The merchant modules name for the same idea. Kept so merchant/credit/*
 -- keeps running unchanged; core/workflow.php writes both.
+DROP TABLE IF EXISTS credit_assessments;
 CREATE TABLE credit_assessments (
     id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id         INT UNSIGNED NOT NULL,
@@ -398,6 +414,7 @@ CREATE TABLE credit_assessments (
 -- 5. MERCHANT MODULE
 -- =====================================================================
 
+DROP TABLE IF EXISTS business_verifications;
 CREATE TABLE business_verifications (
     id                    BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id               INT UNSIGNED NOT NULL,
@@ -423,6 +440,7 @@ CREATE TABLE business_verifications (
     CONSTRAINT fk_bizver_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS settlement_accounts;
 CREATE TABLE settlement_accounts (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        INT UNSIGNED NOT NULL,
@@ -437,6 +455,7 @@ CREATE TABLE settlement_accounts (
     CONSTRAINT fk_settle_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS payout_preferences;
 CREATE TABLE payout_preferences (
     user_id           INT UNSIGNED PRIMARY KEY,
     payout_frequency  VARCHAR(30)  NOT NULL DEFAULT 'weekly',
@@ -448,6 +467,7 @@ CREATE TABLE payout_preferences (
     CONSTRAINT fk_payoutpref_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS merchant_services;
 CREATE TABLE merchant_services (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id     INT UNSIGNED NOT NULL,
@@ -461,6 +481,7 @@ CREATE TABLE merchant_services (
     CONSTRAINT fk_service_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS agreement_signatures;
 CREATE TABLE agreement_signatures (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        INT UNSIGNED NOT NULL,
@@ -482,6 +503,7 @@ CREATE TABLE agreement_signatures (
     CONSTRAINT fk_sign_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS training_progress;
 CREATE TABLE training_progress (
     id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id    INT UNSIGNED NOT NULL,
@@ -496,6 +518,7 @@ CREATE TABLE training_progress (
 -- 6. AGENT MODULE
 -- =====================================================================
 
+DROP TABLE IF EXISTS agent_verification;
 CREATE TABLE agent_verification (
     id                    BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     agent_id              INT UNSIGNED NOT NULL,
@@ -516,6 +539,7 @@ CREATE TABLE agent_verification (
     CONSTRAINT fk_agentver_user FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS background_verifications;
 CREATE TABLE background_verifications (
     id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id    INT UNSIGNED NOT NULL,
@@ -541,6 +565,7 @@ CREATE TABLE background_verifications (
     CONSTRAINT fk_bgv_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS agent_training;
 CREATE TABLE agent_training (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id             INT UNSIGNED NOT NULL,
@@ -554,6 +579,7 @@ CREATE TABLE agent_training (
     CONSTRAINT fk_agenttrain_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS agent_commission_payout;
 CREATE TABLE agent_commission_payout (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id         INT UNSIGNED NOT NULL,
@@ -569,6 +595,7 @@ CREATE TABLE agent_commission_payout (
     CONSTRAINT fk_agentpayout_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS agent_hierarchy;
 CREATE TABLE agent_hierarchy (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id         INT UNSIGNED NOT NULL,
@@ -586,6 +613,7 @@ CREATE TABLE agent_hierarchy (
     CONSTRAINT fk_hierarchy_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS agent_wallet;
 CREATE TABLE agent_wallet (
     user_id         INT UNSIGNED PRIMARY KEY,
     balance         DECIMAL(12,2) NOT NULL DEFAULT 0.00,
@@ -605,6 +633,7 @@ CREATE TABLE agent_wallet (
 -- Catalogue shared by all three modules. The agent module reads `products`
 -- and the customer module reads `product_catalog`; one table, one view over
 -- it, so neither has to change and the two can never disagree.
+DROP TABLE IF EXISTS product_catalog;
 CREATE TABLE product_catalog (
     product_code    VARCHAR(40) PRIMARY KEY,
     product_name    VARCHAR(150) NOT NULL,
@@ -637,6 +666,7 @@ CREATE OR REPLACE VIEW products AS
            agent_commission_rate AS commission_rate, status, created_at
       FROM product_catalog;
 
+DROP TABLE IF EXISTS product_activations;
 CREATE TABLE product_activations (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        INT UNSIGNED NOT NULL,
@@ -660,6 +690,7 @@ CREATE TABLE product_activations (
 
 -- A customer as the agent and merchant modules see them: a CRM record,
 -- distinct from the login row in users. user_id is NULL until they register.
+DROP TABLE IF EXISTS customers;
 CREATE TABLE customers (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id     INT UNSIGNED NULL,
@@ -682,6 +713,7 @@ CREATE TABLE customers (
     CONSTRAINT fk_cust_merchant FOREIGN KEY (merchant_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS leads;
 CREATE TABLE leads (
     id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id  BIGINT UNSIGNED NULL,
@@ -708,6 +740,7 @@ CREATE TABLE leads (
     CONSTRAINT fk_lead_merchant FOREIGN KEY (merchant_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS quotes;
 CREATE TABLE quotes (
     id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     lead_id      BIGINT UNSIGNED NOT NULL,
@@ -732,6 +765,7 @@ CREATE TABLE quotes (
 -- which is the whole point: a customer raises it, an agent assists, a
 -- merchant fulfils, and the commission split follows from the row.
 -- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS applications;
 CREATE TABLE applications (
     id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_number VARCHAR(32)  NOT NULL,
@@ -796,6 +830,7 @@ CREATE OR REPLACE VIEW customer_applications AS
 
 -- Every state change, so a track can be drawn with real timestamps rather
 -- than inferred from the current status alone.
+DROP TABLE IF EXISTS application_events;
 CREATE TABLE application_events (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_id BIGINT UNSIGNED NOT NULL,
@@ -810,6 +845,7 @@ CREATE TABLE application_events (
         REFERENCES applications(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS self_service_applications;
 CREATE TABLE self_service_applications (
     id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     merchant_id      INT UNSIGNED NOT NULL,
@@ -828,6 +864,7 @@ CREATE TABLE self_service_applications (
 -- 9. MONEY
 -- =====================================================================
 
+DROP TABLE IF EXISTS repayments;
 CREATE TABLE repayments (
     id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_id     BIGINT UNSIGNED NULL,
@@ -851,6 +888,7 @@ CREATE TABLE repayments (
     CONSTRAINT fk_rep_app  FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS transactions;
 CREATE TABLE transactions (
     id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_id   BIGINT UNSIGNED NULL,
@@ -872,6 +910,7 @@ CREATE TABLE transactions (
 -- One row per earner per application. An agent-assisted, merchant-fulfilled
 -- application produces two rows, which is exactly the split the flow charts
 -- commission structure describes.
+DROP TABLE IF EXISTS commissions;
 CREATE TABLE commissions (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_id BIGINT UNSIGNED NOT NULL,
@@ -898,6 +937,7 @@ CREATE TABLE commissions (
     CONSTRAINT fk_comm_earner FOREIGN KEY (earner_id)     REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS commission_payouts;
 CREATE TABLE commission_payouts (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     earner_id     INT UNSIGNED NOT NULL,
@@ -920,6 +960,7 @@ CREATE TABLE commission_payouts (
 -- 10. COMMUNICATION AND AUDIT
 -- =====================================================================
 
+DROP TABLE IF EXISTS support_tickets;
 CREATE TABLE support_tickets (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     ticket_code    VARCHAR(24)  NOT NULL,
@@ -943,6 +984,7 @@ CREATE TABLE support_tickets (
     CONSTRAINT fk_ticket_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS messages;
 CREATE TABLE messages (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     sender_id    INT UNSIGNED NULL,
@@ -958,6 +1000,7 @@ CREATE TABLE messages (
     CONSTRAINT fk_msg_recipient FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS notifications;
 CREATE TABLE notifications (
     id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id    INT UNSIGNED NOT NULL,
@@ -971,6 +1014,7 @@ CREATE TABLE notifications (
     CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS audit_logs;
 CREATE TABLE audit_logs (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     actor_id    INT UNSIGNED NULL,
@@ -1074,5 +1118,6 @@ SELECT
     SUM(TABLE_TYPE = 'VIEW')       AS views_created
   FROM information_schema.TABLES
  WHERE TABLE_SCHEMA = DATABASE();
+
 
 
