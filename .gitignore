@@ -1,0 +1,22 @@
+﻿# Live database credentials
+config.php
+.env
+.env.local
+
+# Logs and runtime caches
+storage/logs/*.log
+error_log
+*.log
+
+# Sensitive encryption keys
+storage/keys/*.key
+storage/keys/*.pem
+
+# OS & Editor generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

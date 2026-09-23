@@ -1,0 +1,46 @@
+﻿# =====================================================================
+# INDBIN CRM - Web Server Rules (.htaccess)
+# Compatible with Hostinger Apache / LiteSpeed Web Server
+# =====================================================================
+
+Options -Indexes
+Options +FollowSymLinks
+
+# Security: Block direct HTTP access to sensitive folders and files
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to git, environment and config files
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^config\.php$ - [F,L]
+    RewriteRule ^config\.sample\.php$ - [F,L]
+
+    # Block access to storage, sql, and core directories directly
+    RewriteRule ^sql/.*$ - [F,L]
+    RewriteRule ^core/.*$ - [F,L]
+    RewriteRule ^storage/logs/.*$ - [F,L]
+    RewriteRule ^storage/keys/.*$ - [F,L]
+</IfModule>
+
+# Prevent viewing files starting with dot
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevent viewing sensitive file types
+<FilesMatch "(^#.*#|\.(bak|config|dist|fla|inc|ini|log|psd|sh|sql|sw[op]|sample)|~)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Security HTTP headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# UTF-8 default charset
+AddDefaultCharset UTF-8

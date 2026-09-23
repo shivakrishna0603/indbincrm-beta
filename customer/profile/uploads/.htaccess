@@ -1,0 +1,17 @@
+# Uploaded identity documents must never be served directly.
+# Everything goes through customer/documents/serve.php, which checks the
+# session and writes an access record before streaming the bytes.
+#
+# The merchant module's ekyc/uploads/ and business/uploads/ folders are
+# currently reachable over HTTP: anyone who guesses a filename can read
+# somebody else's Aadhaar scan. Add the same file there.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
+
+php_flag engine off
