@@ -1,13 +1,11 @@
-﻿<?php
+<?php
+declare(strict_types=1);
+
 /**
  * INDBIN : One-click web installer for Cloud, Hostinger & InfinityFree.
  *
  * Runs the schema directly without needing phpMyAdmin copy-pasting.
- */
-
-declare(strict_types=1);
-
-ini_set('display_errors', '1');
+ */ini_set('display_errors', '1');
 ini_set('max_execution_time', '300');
 error_reporting(E_ALL);
 

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Role guards.
  *
@@ -6,11 +8,7 @@
  * so any signed-in account could open any module's pages and write to its
  * tables. These load the row fresh each request, which also means a suspended
  * account is stopped immediately rather than at next login.
- */
-
-declare(strict_types=1);
-
-function require_login(PDO $pdo): array
+ */function require_login(PDO $pdo): array
 {
     if (empty($_SESSION['user_id'])) {
         redirect(BASE_URL . '/index.php');

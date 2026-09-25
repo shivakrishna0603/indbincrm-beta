@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Shared onboarding chrome for merchant and agent.
  *
@@ -10,11 +12,7 @@
  * merchant/portal/shell.php and agent/portal/shell.php now delegate here,
  * keeping their original function names, so every page that already called
  * render_shell_open() picks this up without being touched.
- */
-
-declare(strict_types=1);
-
-require_once __DIR__ . '/../customer/portal/topbar.php';
+ */require_once __DIR__ . '/../customer/portal/topbar.php';
 
 /** Steps per role, in order. Keys match what the existing pages pass in. */
 function onboarding_steps(string $role): array

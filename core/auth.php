@@ -1,15 +1,13 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Authentication for every role.
  *
  * One registration path and one login path for customers, agents, merchants
  * and admins. The three modules each had their own copy; they had drifted,
  * and only one of them set $_SESSION['role'].
- */
-
-declare(strict_types=1);
-
-const SIGNUP_ROLES = ['customer', 'agent', 'merchant'];
+ */const SIGNUP_ROLES = ['customer', 'agent', 'merchant'];
 const LOGIN_ROLES  = ['customer', 'agent', 'merchant', 'admin'];
 
 /**

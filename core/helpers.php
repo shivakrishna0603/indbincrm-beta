@@ -1,11 +1,9 @@
 <?php
-/**
- * Shared helpers. One definition of each, for all three modules.
- */
-
 declare(strict_types=1);
 
-function e(?string $v): string
+/**
+ * Shared helpers. One definition of each, for all three modules.
+ */function e(?string $v): string
 {
     return htmlspecialchars($v ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
@@ -18,15 +16,15 @@ function redirect(string $url): never
 
 function money(float $amount): string
 {
-    return '₹' . number_format($amount, 2);
+    return 'â‚¹' . number_format($amount, 2);
 }
 
 function mask_tail(?string $v, int $keep = 4): string
 {
     $v = (string)$v;
     return strlen($v) <= $keep
-        ? str_repeat('•', strlen($v))
-        : str_repeat('•', strlen($v) - $keep) . substr($v, -$keep);
+        ? str_repeat('â€¢', strlen($v))
+        : str_repeat('â€¢', strlen($v) - $keep) . substr($v, -$keep);
 }
 
 // ------------------------------------------------------------- flashes

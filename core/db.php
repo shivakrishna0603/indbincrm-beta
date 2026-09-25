@@ -1,14 +1,12 @@
-﻿<?php
+<?php
+declare(strict_types=1);
+
 /**
  * The one PDO handle.
  *
  * Supports config.php (for Hostinger or custom environments),
  * getenv() environment variables, and fallback to local defaults.
- */
-
-declare(strict_types=1);
-
-// Load optional config.php if present
+ */// Load optional config.php if present
 if (file_exists(dirname(__DIR__) . '/config.php')) {
     require_once dirname(__DIR__) . '/config.php';
 }

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Shared eKYC step for merchant and agent.
  *
@@ -10,11 +12,7 @@
  *
  * Writes to kyc_documents and sets users.kyc_status, exactly as before, so
  * the admin review queue and the step statuses keep working unchanged.
- */
-
-declare(strict_types=1);
-
-/** Document types offered, keyed by the value stored in the database. */
+ *//** Document types offered, keyed by the value stored in the database. */
 const EKYC_DOC_TYPES = [
     'AADHAAR'  => 'Aadhaar',
     'PAN'      => 'PAN',
@@ -207,7 +205,7 @@ function ekyc_upload_page(PDO $pdo, array $user, string $role): void
                     <div class="field">
                         <label for="otp">Enter the code</label>
                         <input id="otp" type="text" name="otp" inputmode="numeric" maxlength="6"
-                               pattern="[0-9]{6}" autocomplete="one-time-code" required placeholder="••••••">
+                               pattern="[0-9]{6}" autocomplete="one-time-code" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢">
                     </div>
                     <button class="btn block" type="submit">Verify number</button>
                 </form>

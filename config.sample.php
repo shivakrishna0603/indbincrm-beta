@@ -1,4 +1,6 @@
-﻿<?php
+<?php
+declare(strict_types=1);
+
 /**
  * INDBIN CRM - Environment & Database Configuration
  *
@@ -7,11 +9,7 @@
  *    cp config.sample.php config.php
  * 2. Fill in the MySQL credentials created in Hostinger hPanel > Databases.
  * 3. Never commit `config.php` to Git (it is in .gitignore).
- */
-
-declare(strict_types=1);
-
-// Database host: On Hostinger, this is almost always 'localhost'
+ */// Database host: On Hostinger, this is almost always 'localhost'
 define('DB_HOST', 'localhost');
 
 // Database port: standard MySQL port

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * INDBIN : cross-module workflow.
  *
@@ -30,11 +32,7 @@
  *   2. Commission accrues on disbursement, never on approval. Approving
  *      something is not the same as money moving, and paying out on approval
  *      is how a CRM ends up owing commission on a loan that never funded.
- */
-
-declare(strict_types=1);
-
-// ---------------------------------------------------------------------
+ */// ---------------------------------------------------------------------
 // Stages
 // ---------------------------------------------------------------------
 
