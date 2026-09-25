@@ -16,15 +16,15 @@ function redirect(string $url): never
 
 function money(float $amount): string
 {
-    return 'â‚¹' . number_format($amount, 2);
+    return 'Ã¢â€šÂ¹' . number_format($amount, 2);
 }
 
 function mask_tail(?string $v, int $keep = 4): string
 {
     $v = (string)$v;
     return strlen($v) <= $keep
-        ? str_repeat('â€¢', strlen($v))
-        : str_repeat('â€¢', strlen($v) - $keep) . substr($v, -$keep);
+        ? str_repeat('Ã¢â‚¬Â¢', strlen($v))
+        : str_repeat('Ã¢â‚¬Â¢', strlen($v) - $keep) . substr($v, -$keep);
 }
 
 // ------------------------------------------------------------- flashes
@@ -380,18 +380,22 @@ function ensure_schema_current(PDO $pdo): void
         // schema_migrations does not exist yet: fall through and migrate.
     }
 
-    ensure_party_code_sequences($pdo);
-    ensure_product_catalog_customer_facing($pdo);
-    ensure_agreement_signatures_columns($pdo);
-    ensure_settlement_accounts_nullable($pdo);
-    ensure_monthly_turnover_enum($pdo);
+    try {
+        ensure_party_code_sequences($pdo);
+        ensure_product_catalog_customer_facing($pdo);
+        ensure_agreement_signatures_columns($pdo);
+        ensure_settlement_accounts_nullable($pdo);
+        ensure_monthly_turnover_enum($pdo);
 
-    $pdo->exec(
-        "CREATE TABLE IF NOT EXISTS schema_migrations (
-            id INT UNSIGNED PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )"
-    );
-    $pdo->exec("INSERT IGNORE INTO schema_migrations (id) VALUES (1)");
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS schema_migrations (
+                id INT UNSIGNED PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )"
+        );
+        $pdo->exec("INSERT IGNORE INTO schema_migrations (id) VALUES (1)");
+    } catch (Throwable $e) {
+        error_log('ensure_schema_current caught: ' . $e->getMessage());
+    }
 }
 
 function generate_valid_aadhaar(): string

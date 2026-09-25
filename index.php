@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 /*
     ============================================
     INDBIN : home, registration and login
@@ -12,8 +16,6 @@
     session_start() and configures the session name to match the one the
     customer module uses.
 */
-
-declare(strict_types=1);
 require_once __DIR__ . '/core/bootstrap.php';
 
 /* ============================================
@@ -216,10 +218,10 @@ if ($role === 'customer') {
 
     <ul class="nav-links">
         <li><a href="index.php">Home</a></li>
-        <li><a href="#">About Us ▾</a></li>
+        <li><a href="#">About Us â–¾</a></li>
         <li><a href="#">Solutions</a></li>
-        <li><a href="#">Products ▾</a></li>
-        <li><a href="#">Resources ▾</a></li>
+        <li><a href="#">Products â–¾</a></li>
+        <li><a href="#">Resources â–¾</a></li>
         <li><a href="#">Contact Us</a></li>
     </ul>
 
@@ -279,7 +281,7 @@ if ($role === 'customer') {
             </div>
 
             <h1 style="color:#059669;">You're all set!</h1>
-            <p class="subtitle">One last step — verify your identity to activate your account.</p>
+            <p class="subtitle">One last step â€” verify your identity to activate your account.</p>
 
             <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
 
@@ -343,7 +345,7 @@ if ($role === 'customer') {
                 <button type="submit" class="complete-button">Complete</button>
             </form>
 
-            <a href="index.php" class="back-button">← Back to role selection</a>
+            <a href="index.php" class="back-button">â† Back to role selection</a>
         <?php endif; ?>
     </div>
 </div>
@@ -429,7 +431,7 @@ if ($role === 'customer') {
     </div>
 
     <div class="footer-bottom">
-        <p>© 2026 INDBIN Fintech Services LLP. All Rights Reserved.</p>
+        <p>Â© 2026 INDBIN Fintech Services LLP. All Rights Reserved.</p>
 
         <div class="socials">
             <a href="#"><i class="fa-brands fa-facebook"></i></a>
