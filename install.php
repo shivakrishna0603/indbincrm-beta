@@ -90,7 +90,7 @@ if ($run) {
                 ]
             );
 
-            $statements = split_statements((string)file_get_contents($sqlFile));
+            $raw = preg_replace("/^\xEF\xBB\xBF/", "", (string)file_get_contents($sqlFile)); $statements = split_statements($raw);
             foreach ($statements as $n => $stmt) {
                 try {
                     $pdo->exec($stmt);
